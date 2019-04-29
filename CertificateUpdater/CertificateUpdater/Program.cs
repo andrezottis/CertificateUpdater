@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Permissions;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace CertificateUpdater
 {
@@ -12,33 +14,39 @@ namespace CertificateUpdater
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("\r\nExists Certs Name and Location");
-            Console.WriteLine("------ ----- -------------------------");
+            X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
+            store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
-            foreach (StoreLocation storeLocation in (StoreLocation[])
-                Enum.GetValues(typeof(StoreLocation)))
+            X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
+            X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+            X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(fcollection, "Test Certificate Select", "Select a certificate from the following list to get information on that certificate", X509SelectionFlag.MultiSelection);
+            Console.WriteLine("Number of certificates: {0}{1}", scollection.Count, Environment.NewLine);
+
+            foreach (X509Certificate2 x509 in scollection)
             {
-                foreach (StoreName storeName in (StoreName[])
-                    Enum.GetValues(typeof(StoreName)))
+                try
                 {
-                    X509Store store = new X509Store(storeName, storeLocation);
-
-                    try
-                    {
-                        store.Open(OpenFlags.OpenExistingOnly);
-
-                        Console.WriteLine("Yes    {0,4}  {1}, {2}",
-                            store.Certificates.Count, store.Name, store.Location);
-                    }
-                    catch (CryptographicException)
-                    {
-                        Console.WriteLine("No           {0}, {1}",
-                            store.Name, store.Location);
-                    }
+                    byte[] rawdata = x509.RawData;
+                    Console.WriteLine("Content Type: {0}{1}", X509Certificate2.GetCertContentType(rawdata), Environment.NewLine);
+                    Console.WriteLine("Friendly Name: {0}{1}", x509.FriendlyName, Environment.NewLine);
+                    Console.WriteLine("Certificate Verified?: {0}{1}", x509.Verify(), Environment.NewLine);
+                    Console.WriteLine("Simple Name: {0}{1}", x509.GetNameInfo(X509NameType.SimpleName, true), Environment.NewLine);
+                    Console.WriteLine("Signature Algorithm: {0}{1}", x509.SignatureAlgorithm.FriendlyName, Environment.NewLine);
+                    Console.WriteLine("Private Key: {0}{1}", x509.PrivateKey.ToXmlString(false), Environment.NewLine);
+                    Console.WriteLine("Public Key: {0}{1}", x509.PublicKey.Key.ToXmlString(false), Environment.NewLine);
+                    Console.WriteLine("Certificate Archived?: {0}{1}", x509.Archived, Environment.NewLine);
+                    Console.WriteLine("Length of Raw Data: {0}{1}", x509.RawData.Length, Environment.NewLine);
+                    X509Certificate2UI.DisplayCertificate(x509);
+                    x509.Reset();
                 }
-                Console.WriteLine();
-                Console.ReadLine();
+                catch (CryptographicException)
+                {
+                    Console.WriteLine("Information could not be written out for this certificate.");
+                }
             }
+            store.Close();
+            Console.ReadLine();
+            
         }
     }
 }
