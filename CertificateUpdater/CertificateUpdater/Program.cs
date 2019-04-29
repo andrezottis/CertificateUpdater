@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace CertificateUpdater
 {
@@ -7,46 +12,33 @@ namespace CertificateUpdater
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("\r\nExists Certs Name and Location");
+            Console.WriteLine("------ ----- -------------------------");
+
+            foreach (StoreLocation storeLocation in (StoreLocation[])
+                Enum.GetValues(typeof(StoreLocation)))
+            {
+                foreach (StoreName storeName in (StoreName[])
+                    Enum.GetValues(typeof(StoreName)))
+                {
+                    X509Store store = new X509Store(storeName, storeLocation);
+
+                    try
+                    {
+                        store.Open(OpenFlags.OpenExistingOnly);
+
+                        Console.WriteLine("Yes    {0,4}  {1}, {2}",
+                            store.Certificates.Count, store.Name, store.Location);
+                    }
+                    catch (CryptographicException)
+                    {
+                        Console.WriteLine("No           {0}, {1}",
+                            store.Name, store.Location);
+                    }
+                }
+                Console.WriteLine();
+                Console.ReadLine();
+            }
         }
-        public static void CheckCertificate()
-        {
-            // create a default certificate id none specified.
-            CertificateIdentifier id = configuration.SecurityConfiguration.ApplicationCertificate;
-
-            X509Certificate2
-            if (id == null)
-            {
-                CertificateFactory
-                id = new CertificateIdentifier();
-                id.StoreType = CertificateStoreType.Windows;
-                id.StorePath = "LocalMachine\\My";
-                id.SubjectName = configuration.ApplicationName;
-            }
-
-            IList<string> serverDomainNames = configuration.GetServerDomainNames();
-
-            // check for private key.
-            X509Certificate2 certificate = id.Find(true);
-
-            if (certificate != null)
-            {
-                return;
-            }
-
-            certificate = id.Find(false);
-
-            if (certificate != null)
-            {
-                Utils.Trace(Utils.TraceMasks.Error, "Certificate found. But private ket is not accessible: '{0}' {1}", certificate.Subject, certificate.Thumbprint);
-                certificate = null;
-            }
-
-            // add the host.
-            if (serverDomainNames.Count == 0)
-            {
-                serverDomainNames.Add(System.Net.Dns.GetHostName());
-
-            }
     }
 }
