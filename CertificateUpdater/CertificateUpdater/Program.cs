@@ -16,7 +16,7 @@ namespace CertificateUpdater
         {
             try
             {
-                string ISSUER = "opp.andritz.com";
+                string ISSUER = "SRVMETRIS";
                 string FINALTHUMBPRINT;
                 X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
@@ -26,24 +26,33 @@ namespace CertificateUpdater
                 X509Certificate2Collection apocollection = fcollection.Find(X509FindType.FindBySubjectName, ISSUER, true);
 
                 X509Certificate2 lastCert = apocollection[0];
+                FINALTHUMBPRINT = lastCert.Thumbprint;
                 foreach (var certificatecolection in apocollection)
                 {
 
                     var dateCert = Convert.ToDateTime(certificatecolection.GetExpirationDateString());
                     var compareDate = Convert.ToDateTime(lastCert.GetExpirationDateString());
-                    if (dateCert > compareDate)
+                    if ((apocollection.Count == 1) || (dateCert > compareDate))
                     {
                         lastCert = certificatecolection;
-                        Console.WriteLine("Certs is date : " + dateCert.ToString());
-                        Console.WriteLine("The older date is:" + lastCert.GetExpirationDateString());
+                        Console.WriteLine("Certs is date : " + dateCert);
+                        Console.WriteLine("The older date is:" + compareDate);
                         Console.WriteLine("The older cert thumb is:" + lastCert.Thumbprint);
                         FINALTHUMBPRINT = lastCert.Thumbprint;
-                    }
-                    else
-                        Console.WriteLine("Certs is date : " + dateCert.ToString());
+                        //string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:9000";
+                        //Console.WriteLine(strCmdText);
+                        //strCmdText = "netsh http add sslcert ipport=0.0.0.0:9000 certhash=" + FINALTHUMBPRINT.Trim() + " appid={3a487f59-fcb7-4213-b7ff-871456ae7b70}";
+                        //Console.WriteLine(strCmdText);
+                    }else
+                        FINALTHUMBPRINT = lastCert.Thumbprint;
 
                     Console.WriteLine();
                 }
+
+                string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:9000";
+                Console.WriteLine(strCmdText);
+                strCmdText = "netsh http add sslcert ipport=0.0.0.0:9000 certhash=" + FINALTHUMBPRINT.Trim() + " appid={3a487f59-fcb7-4213-b7ff-871456ae7b70}";
+                Console.WriteLine(strCmdText);
 
                 //X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(apocollection, "Test Certificate Select", "Select a certificate from the following list to get information on that certificate", X509SelectionFlag.MultiSelection);
                 //Console.WriteLine("Number of certificates: {0}{1}", scollection.Count, Environment.NewLine);
@@ -73,9 +82,9 @@ namespace CertificateUpdater
                 store.Close();
                 Console.ReadLine();
             }
-            catch
+            catch (CryptographicException)
             {
-                Console.WriteLine("Not working");
+                Console.WriteLine("Information could not be written out for this certificate.");
             }
         }
     }
