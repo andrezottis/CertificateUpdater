@@ -6,7 +6,7 @@ using System.Security.Permissions;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Diagnostics;
 
 namespace CertificateUpdater
 {
@@ -17,7 +17,7 @@ namespace CertificateUpdater
             try
             {
                 //Future must be read from a config file.
-                string Issuer = "SRVMETRIS";
+                string Issuer = "METRISHOTFIX";
                 string FinalThumbprint;
                 X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
@@ -37,8 +37,8 @@ namespace CertificateUpdater
                     {
                         lastCert = certificatecolection;
                         Console.WriteLine("Certs is date : " + dateCert);
-                        Console.WriteLine("The older date is:" + compareDate);
-                        Console.WriteLine("The older cert thumb is:" + lastCert.Thumbprint);
+                        Console.WriteLine("The newest date is:" + compareDate);
+                        Console.WriteLine("The newest cert thumb is:" + lastCert.Thumbprint);
                         FinalThumbprint = lastCert.Thumbprint;
                         //string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:9000";
                         //Console.WriteLine(strCmdText);
@@ -52,39 +52,24 @@ namespace CertificateUpdater
 
                 string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:9000";
                 Console.WriteLine(strCmdText);
-                System.Diagnostics.Process.Start("CMD.exe", strCmdText);
                 strCmdText = "netsh http add sslcert ipport=0.0.0.0:9000 certhash=" + FinalThumbprint.Trim() + " appid={3a487f59-fcb7-4213-b7ff-871456ae7b70}";
                 Console.WriteLine(strCmdText);
-                System.Diagnostics.Process.Start("CMD.exe", strCmdText);
 
+                Process cmd = new Process();
+                cmd.StartInfo.FileName = "cmd.exe";
+                cmd.StartInfo.RedirectStandardInput = true;
+                cmd.StartInfo.RedirectStandardOutput = true;
+                cmd.StartInfo.CreateNoWindow = true;
+                cmd.StartInfo.UseShellExecute = false;
+                cmd.Start();
 
-                //WILL BE REMOVED AS SOON THE SOFTWARE IS WORK. HERE FOR CONSULTING PURPOSES.
+                cmd.StandardInput.WriteLine("netsh http delete sslcert ipport=0.0.0.0:9000");
+                cmd.StandardInput.WriteLine("netsh http add sslcert ipport=0.0.0.0:9000 certhash=" + FinalThumbprint.Trim() + " appid={3a487f59-fcb7-4213-b7ff-871456ae7b70}");
+                cmd.StandardInput.Flush();
+                cmd.StandardInput.Close();
+                cmd.WaitForExit();
+                Console.WriteLine(cmd.StandardOutput.ReadToEnd());
 
-                //X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(apocollection, "Test Certificate Select", "Select a certificate from the following list to get information on that certificate", X509SelectionFlag.MultiSelection);
-                //Console.WriteLine("Number of certificates: {0}{1}", scollection.Count, Environment.NewLine);
-
-                //foreach (X509Certificate2 x509 in scollection)
-                //{
-                //    try
-                //    {
-                //        byte[] rawdata = x509.RawData;
-                //        Console.WriteLine("Content Type: {0}{1}", X509Certificate2.GetCertContentType(rawdata), Environment.NewLine);
-                //        Console.WriteLine("Friendly Name: {0}{1}", x509.FriendlyName, Environment.NewLine);
-                //        Console.WriteLine("Certificate Verified?: {0}{1}", x509.Verify(), Environment.NewLine);
-                //        Console.WriteLine("Simple Name: {0}{1}", x509.GetNameInfo(X509NameType.SimpleName, true), Environment.NewLine);
-                //        Console.WriteLine("Signature Algorithm: {0}{1}", x509.SignatureAlgorithm.FriendlyName, Environment.NewLine);
-                //        Console.WriteLine("Private Key: {0}{1}", x509.PrivateKey.ToXmlString(false), Environment.NewLine);
-                //        Console.WriteLine("Public Key: {0}{1}", x509.PublicKey.Key.ToXmlString(false), Environment.NewLine);
-                //        Console.WriteLine("Certificate Archived?: {0}{1}", x509.Archived, Environment.NewLine);
-                //        Console.WriteLine("Length of Raw Data: {0}{1}", x509.RawData.Length, Environment.NewLine);
-                //        //X509Certificate2UI.DisplayCertificate(x509);
-                //        x509.Reset();
-                //    }
-                //    catch (CryptographicException)
-                //    {
-                //        Console.WriteLine("Information could not be written out for this certificate.");
-                //    }
-                //}
                 store.Close();
                 Console.ReadLine();
             }
