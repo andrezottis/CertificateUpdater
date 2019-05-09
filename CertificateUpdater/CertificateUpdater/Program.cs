@@ -7,32 +7,28 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Configuration;
 
 namespace CertificateUpdater
 
 {
-
-    class Constants
-    {
-        public const string Issuer = "METRISHOTFIX";
-        public const int ServicePort = 9000;
-        public const string ServiceAppGUID ="3a487f59-fcb7-4213-b7ff-871456ae7b70";
-    }
     class Program
     {
         static void Main(string[] args)
         {
             try
             {
-                //Future must be read from a config file.
                 string FinalThumbprint;
+                string Issuer = ConfigurationManager.AppSettings["Certificate.Issuer"];
+                int ServicePort = int.Parse(ConfigurationManager.AppSettings["Service.Port"]);
+                string ServiceAppGUID = ConfigurationManager.AppSettings["Program.GUID"];
 
                 X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
                 X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
                 X509Certificate2Collection fCollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
-                X509Certificate2Collection apoCollection = fCollection.Find(X509FindType.FindBySubjectName, Constants.Issuer, true);
+                X509Certificate2Collection apoCollection = fCollection.Find(X509FindType.FindBySubjectName, Issuer, true);
 
 
                 if (0 == apoCollection.Count)
@@ -66,9 +62,9 @@ namespace CertificateUpdater
                         Console.WriteLine();
                     }
 
-                    string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:" +Constants.ServicePort;
+                    string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:" + ServicePort;
                     Console.WriteLine(strCmdText);
-                    strCmdText = "netsh http add sslcert ipport=0.0.0.0:"+ Constants.ServicePort + " certhash=" + FinalThumbprint.Trim() + " appid={"+ Constants.ServiceAppGUID +"}";
+                    strCmdText = "netsh http add sslcert ipport=0.0.0.0:" + ServicePort + " certhash=" + FinalThumbprint.Trim() + " appid={" + ServiceAppGUID + "}";
                     Console.WriteLine(strCmdText);
 
                     Process cmd = new Process();
@@ -79,8 +75,8 @@ namespace CertificateUpdater
                     cmd.StartInfo.UseShellExecute = false;
                     cmd.Start();
 
-                    cmd.StandardInput.WriteLine("netsh http delete sslcert ipport=0.0.0.0:" + Constants.ServicePort);
-                    cmd.StandardInput.WriteLine("netsh http add sslcert ipport=0.0.0.0:"+ Constants.ServicePort + " certhash=" + FinalThumbprint.Trim() + " appid={" + Constants.ServiceAppGUID + "}";
+                    cmd.StandardInput.WriteLine("netsh http delete sslcert ipport=0.0.0.0:" + ServicePort);
+                    cmd.StandardInput.WriteLine("netsh http add sslcert ipport=0.0.0.0:" + ServicePort + " certhash=" + FinalThumbprint.Trim() + " appid={" + ServiceAppGUID + "}");
                     cmd.StandardInput.Flush();
                     cmd.StandardInput.Close();
                     cmd.WaitForExit();
@@ -90,7 +86,7 @@ namespace CertificateUpdater
                     Console.ReadLine();
                 }
             }
-            catch (CryptographicException e)
+            catch (global::System.Exception e)
             {
                 Console.WriteLine("Information could not be written out for this certificate. The error code is:  " + e);
             }
