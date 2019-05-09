@@ -56,7 +56,7 @@ namespace CertificateUpdater
                         {
                             lastCert = certificatecolection;
                             compareDate = Convert.ToDateTime(lastCert.GetExpirationDateString());
-                            Console.WriteLine("The newest cert is " + lastCert.FriendlyName + "\nand has the expiration date: " + compareDate);
+                            Console.WriteLine("The newest certificate is " + lastCert.FriendlyName + "\nand has the expiration date: " + compareDate);
                             Console.WriteLine("The thumbprint is: \n" + lastCert.Thumbprint + "\n");
                             FinalThumbprint = lastCert.Thumbprint;
 
