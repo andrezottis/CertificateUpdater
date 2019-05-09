@@ -1,5 +1,6 @@
-# CertificateUpdater
-Automated tool to update an app certificate.
+# Certificate Updater
+Automated tool to update an aplication certificate that runs on Windows.
+Compatible with .NetFrameWork 4.6.1
 
 ## Details
 This App has a AppSettings.config file that must be placed with the binary .exe.
