@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Configuration;
+using System.IO;
 
 namespace CertificateUpdater
 
@@ -18,6 +19,7 @@ namespace CertificateUpdater
         {
             try
             {
+                #region Loading config file
 
                 Console.WriteLine("Reading configuration file... \n");
                 string FinalThumbprint;
@@ -26,6 +28,12 @@ namespace CertificateUpdater
                 string ServiceAppGUID = ConfigurationManager.AppSettings["Program.GUID"];
                 bool AutoClose = bool.Parse(ConfigurationManager.AppSettings["Auto.Close"]);
                 bool DebugMode = bool.Parse(ConfigurationManager.AppSettings["Debug.Mode"]);
+                bool ExportCert = bool.Parse(ConfigurationManager.AppSettings["Export.Cert"]);
+                string ExportPath = ConfigurationManager.AppSettings["Export.Path"];
+                string ExportPassword = ConfigurationManager.AppSettings["Export.Password"];
+
+                #endregion Loading config file
+                #region Get certificate and prepare to use
 
                 X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
@@ -63,10 +71,22 @@ namespace CertificateUpdater
                         }
                         else
                             FinalThumbprint = lastCert.Thumbprint;
+                        #endregion Get certificate and prepare to use
+
+                        #region Export cert
+
+                        if (ExportCert)
+                        {
+                            //export cert
+                            byte[] certData = lastCert.Export(X509ContentType.Pfx, ""+ExportPassword+"");
+                            File.WriteAllBytes(@""+ ExportPath +"", certData);
+                        }
+
+                        #endregion Export cert
 
                         Console.WriteLine();
                     }
-
+                    #region Apply cert
                     if (DebugMode)
                     {
                         string strCmdText = "netsh http delete sslcert ipport=0.0.0.0:" + ServicePort;
@@ -74,6 +94,8 @@ namespace CertificateUpdater
                         strCmdText = "netsh http add sslcert ipport=0.0.0.0:" + ServicePort + " certhash=" + FinalThumbprint.Trim() + " appid={" + ServiceAppGUID + "}";
                         Console.WriteLine(strCmdText);
                     }
+
+
                     else
                     {
                         Process cmd = new Process();
@@ -91,6 +113,7 @@ namespace CertificateUpdater
                         cmd.WaitForExit();
                         Console.WriteLine(cmd.StandardOutput.ReadToEnd());
                         store.Close();
+                        #endregion Apply cert
                     }
                     if (AutoClose != true)
                         Console.ReadLine();
