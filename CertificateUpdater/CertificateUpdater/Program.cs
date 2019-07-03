@@ -71,21 +71,23 @@ namespace CertificateUpdater
                         }
                         else
                             FinalThumbprint = lastCert.Thumbprint;
+
                         #endregion Get certificate and prepare to use
-
-                        #region Export cert
-
-                        if (ExportCert)
-                        {
-                            //export cert
-                            byte[] certData = lastCert.Export(X509ContentType.Pfx, ""+ExportPassword+"");
-                            File.WriteAllBytes(@""+ ExportPath +"", certData);
-                        }
-
-                        #endregion Export cert
-
                         Console.WriteLine();
                     }
+
+                    #region Export cert
+                    if (ExportCert)
+                    {
+                        //export cert
+                        byte[] certData = lastCert.Export(X509ContentType.Pfx, ExportPassword);
+                        Console.WriteLine("Got the cert: " + lastCert.FriendlyName);
+                        File.WriteAllBytes(@"" + ExportPath, certData);
+                        Console.WriteLine("Should be writed at folder: " + ExportPath);
+                    }
+                    #endregion Export cert
+
+
                     #region Apply cert
                     if (DebugMode)
                     {
