@@ -35,13 +35,15 @@ namespace CertificateUpdater
                 #endregion Loading config file
                 #region Get certificate and prepare to use
 
+                Console.WriteLine("Opening the Certificates Store...");
                 X509Store store = new X509Store("MY", StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
                 X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
-                X509Certificate2Collection fCollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
-                X509Certificate2Collection apoCollection = fCollection.Find(X509FindType.FindBySubjectName, Issuer, true);
-
+                Console.WriteLine("Looking for the Issued to...");
+                X509Certificate2Collection fCollection = (X509Certificate2Collection)collection.Find(X509FindType.FindBySubjectName, Issuer, true);
+                Console.WriteLine("Looking for the newest cert...");
+                X509Certificate2Collection apoCollection = fCollection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
                 var apoCountCollection = apoCollection.Count;
 
                 if (0 == apoCountCollection)
