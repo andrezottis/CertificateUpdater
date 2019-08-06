@@ -24,5 +24,5 @@ This App has a AppSettings.config file that must be placed with the binary .exe.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
 
