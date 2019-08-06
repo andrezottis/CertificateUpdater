@@ -19,3 +19,8 @@ This App has a AppSettings.config file that must be placed with the binary .exe.
 ## Authors
 
 * **André Zottis** - *Initial work* - [AndreZottis](https://github.com/andrezottis)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
